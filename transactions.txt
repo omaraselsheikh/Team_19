@@ -1,3 +1,9 @@
-Transaction 	 Duration
-Deposit and Withdrawal3
-Food merge       2
+NAME_LIST_START
+omar:2
+odq:2
+e:2
+wd:0
+dcs:0
+edwed:0
+w:0
+eomar:0

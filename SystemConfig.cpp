@@ -191,134 +191,164 @@ struct WorkingHours
 // needs some work to solve the problem of adding transactions and a new line problem
 struct Transactions
 {
+
+    // Utility to check if name is valid
     bool isValidName(const string &name)
     {
-        return !name.empty();
+        return !name.empty() && name != "done";
     }
+
+    // Utility to check if duration is valid
     bool isValidDuration(int duration)
     {
         return duration > 0;
     }
+
+    // Utility to check for duplicates
     bool alreadyExists(const vector<string> &names, const string &name)
     {
         return find(names.begin(), names.end(), name) != names.end();
     }
 
+    // Modern approach: Using the loop condition to control flow
     string getValidTransactionName(const vector<string> &existingNames)
     {
-        char name[100] = "Deposit"; // Initialize with a non-empty string to avoid issues with getline
+        string input;
+
         while (true)
         {
-            cin.ignore(numeric_limits<streamsize>::max(), '\n');
-
             cout << "Enter transaction name (or 'done' to finish): ";
-            cin.getline(name, 100);
-
-            if (strcmp(name, "done") == 0)
-                return name;
-
-            if (!isValidName(name))
+            // Use getline to allow names with spaces
+            if (!getline(cin, input) || input == "done")
             {
-                cout << "ERROR: Transaction name cannot be empty. Please enter a valid name: ";
+                return "done";
+            }
+
+            if (input.empty())
+            {
+                cout << "ERROR: Name cannot be empty.\n";
                 continue;
             }
 
-            if (alreadyExists(existingNames, name))
+            if (alreadyExists(existingNames, input))
             {
-                cout << "ERROR: Transaction name already exists. Please enter a unique name: ";
+                cout << "ERROR: '" << input << "' already exists. Enter a unique name: \n";
                 continue;
             }
 
-            return name;
+            return input;
         }
     }
 
     int getValidTransactionDuration()
     {
         int duration;
-        while (true)
+        // Idiomatic: check the state of the stream inside the condition
+        cout << "Enter average duration in minutes: ";
+        while (!(cin >> duration) || !isValidDuration(duration))
         {
-            cout << "Enter average duration in minutes: ";
-            if (!(cin >> duration) || !isValidDuration(duration))
-            {
-                cin.clear();
-                cin.ignore(numeric_limits<streamsize>::max(), '\n');
-                cout << "ERROR\nPLEASE RE-ENTER A VALID DURATION: ";
-            }
-            else
-            {
-                cin.ignore(numeric_limits<streamsize>::max(), '\n'); // Clear the input buffer after reading duration
-                return duration;
-            }
+            cin.clear();                                         // Clear error flag
+            cin.ignore(numeric_limits<streamsize>::max(), '\n'); // Discard bad input
+            cout << "ERROR: Please enter a valid positive integer for duration: ";
         }
+        cin.ignore(numeric_limits<streamsize>::max(), '\n'); // Clean buffer for next getline
+        return duration;
     }
 
     void defineTransactionTypes()
-
     {
         vector<string> names;
         vector<int> durations;
-
         string name;
-        int duration;
 
-        while (true)
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+        // Using the "Best Practice" loop: The loop condition itself handles the 'done' logic
+        while ((name = getValidTransactionName(names)) != "done")
         {
-            name = getValidTransactionName(names);
-            if (name == "done")
-                break;
-
-            duration = getValidTransactionDuration();
-
+            int duration = getValidTransactionDuration();
             names.push_back(name);
             durations.push_back(duration);
         }
 
+        saveToFile(names, durations);
         cout << "-------------------------------\n";
         cout << "Transactions Added successfully!" << endl;
+    }
 
+    // Helper to avoid code repetition in define and add
+    void saveToFile(const vector<string> &names, const vector<int> &durations)
+    {
         ofstream file("transactions.txt");
-        file << "Transaction \t Duration\n";
-        for (int i = 0; i < names.size(); i++)
+        if (!file)
+            return;
+
+        // We write a simple header
+        file << "NAME_LIST_START" << endl;
+        for (size_t i = 0; i < names.size(); ++i)
         {
-            file << names[i] << setw(18 - names[i].length()) << durations[i] << "\n";
+            // We use a colon as a separator to handle names with spaces safely
+            file << names[i] << ":" << durations[i] << endl;
         }
         file.close();
     }
+
+    // Rest of your functions (addTransaction, etc.) would follow the same pattern...
 
     void addTransaction()
     {
         vector<string> names;
         vector<int> durations;
 
+        // --- STEP 1: LOAD EXISTING DATA ---
         ifstream file("transactions.txt");
-        string tempName;
-        int tempDuration;
-
-        while (file >> tempName >> tempDuration)
+        string line;
+        if (file.is_open())
         {
-            names.push_back(tempName);
-            durations.push_back(tempDuration);
+            getline(file, line); // Skip the header line "NAME_LIST_START"
+
+            while (getline(file, line))
+            {
+                if (line.empty())
+                    continue;
+
+                size_t delimiterPos = line.find(':');
+                if (delimiterPos != string::npos)
+                {
+                    string name = line.substr(0, delimiterPos);
+                    int duration = stoi(line.substr(delimiterPos + 1));
+                    names.push_back(name);
+                }
+            }
+            file.close();
         }
-        file.close();
 
-        string name = getValidTransactionName(names);
-        if (name == "done")
-            return;
+        // --- STEP 2: CLEAR INPUT BUFFER ---
+        // If you came from a menu, we must clear the '\n'
+        cin.clear();
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
-        int duration = getValidTransactionDuration();
+        // --- STEP 3: INPUT LOOP ---
+        string newName;
+        cout << "\n--- Adding Multiple Transactions (type 'done' to stop) ---\n";
 
-        names.push_back(name);
-        durations.push_back(duration);
-
-        // Code to save updated transactions back to file
-        ofstream outputFile("transactions.txt");
-        outputFile << "Transaction \t Duration\n";
-        for (int i = 0; i < names.size(); i++)
+        while (true)
         {
-            outputFile << names[i] << setw(18 - names[i].length()) << durations[i] << "\n";
+            newName = getValidTransactionName(names);
+            if (newName == "done")
+                break;
+
+            int newDuration = getValidTransactionDuration();
+
+            names.push_back(newName);
+            durations.push_back(newDuration);
+
+            cout << ">> '" << newName << "' added to queue.\n";
         }
-        outputFile.close();
+
+        // --- STEP 4: SAVE ALL ---
+        saveToFile(names, durations);
+        cout << "Success: File updated with " << names.size() << " total transactions.\n";
     }
 
     void DisplayTransactions()
@@ -326,12 +356,15 @@ struct Transactions
         cout << "=========================================\n";
         cout << "Current Transactions Configuration:\n";
         cout << "=========================================\n";
+
         ifstream file("transactions.txt");
         string line;
+
         while (getline(file, line))
         {
             cout << line << endl;
         }
+
         file.close();
     }
 };

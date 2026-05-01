@@ -192,60 +192,63 @@ struct WorkingHours
 struct Transactions
 {
 
-    // Utility to check if name is valid
-    bool isValidName(const string &name)
+    void saveToFile(const vector<string> &names, const vector<int> &durations)
     {
-        return !name.empty() && name != "done";
+        ofstream file("transactions.txt");
+
+        file << "DATA_HEADER" << endl;
+
+        for (int i = 0; i < names.size(); ++i)
+        {
+            // Use a SPACE here, not a colon.
+            // This is what the beginner 'add' function expects.
+            file << names[i] << " " << durations[i] << endl;
+        }
+
+        file.close();
     }
 
-    // Utility to check if duration is valid
-    bool isValidDuration(int duration)
-    {
-        return duration > 0;
-    }
-
-    // Utility to check for duplicates
+    // Bool to check for duplicates
     bool alreadyExists(const vector<string> &names, const string &name)
     {
         return find(names.begin(), names.end(), name) != names.end();
     }
 
-    // Modern approach: Using the loop condition to control flow
     string getValidTransactionName(const vector<string> &existingNames)
     {
-        string input;
+        string name;
 
         while (true)
         {
             cout << "Enter transaction name (or 'done' to finish): ";
             // Use getline to allow names with spaces
-            if (!getline(cin, input) || input == "done")
+            if (!getline(cin, name) || name == "done")
             {
                 return "done";
             }
 
-            if (input.empty())
+            if (name.empty())
             {
                 cout << "ERROR: Name cannot be empty.\n";
                 continue;
             }
 
-            if (alreadyExists(existingNames, input))
+            if (alreadyExists(existingNames, name))
             {
-                cout << "ERROR: '" << input << "' already exists. Enter a unique name: \n";
+                cout << "ERROR: '" << name << "' already exists. Enter a unique name: \n";
                 continue;
             }
 
-            return input;
+            return name;
         }
     }
 
     int getValidTransactionDuration()
     {
         int duration;
-        // Idiomatic: check the state of the stream inside the condition
+
         cout << "Enter average duration in minutes: ";
-        while (!(cin >> duration) || !isValidDuration(duration))
+        while (!(cin >> duration) || duration <= 0)
         {
             cin.clear();                                         // Clear error flag
             cin.ignore(numeric_limits<streamsize>::max(), '\n'); // Discard bad input
@@ -263,7 +266,6 @@ struct Transactions
 
         cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
-        // Using the "Best Practice" loop: The loop condition itself handles the 'done' logic
         while ((name = getValidTransactionName(names)) != "done")
         {
             int duration = getValidTransactionDuration();
@@ -276,79 +278,40 @@ struct Transactions
         cout << "Transactions Added successfully!" << endl;
     }
 
-    // Helper to avoid code repetition in define and add
-    void saveToFile(const vector<string> &names, const vector<int> &durations)
-    {
-        ofstream file("transactions.txt");
-        if (!file)
-            return;
-
-        // We write a simple header
-        file << "NAME_LIST_START" << endl;
-        for (size_t i = 0; i < names.size(); ++i)
-        {
-            // We use a colon as a separator to handle names with spaces safely
-            file << names[i] << ":" << durations[i] << endl;
-        }
-        file.close();
-    }
-
-    // Rest of your functions (addTransaction, etc.) would follow the same pattern...
-
     void addTransaction()
     {
         vector<string> names;
         vector<int> durations;
 
-        // --- STEP 1: LOAD EXISTING DATA ---
         ifstream file("transactions.txt");
-        string line;
-        if (file.is_open())
+        string header, tempName;
+        int tempDuration;
+
+        file >> header; // Reads "DATA_HEADER" and moves on
+
+        // This loop now works because it finds a space between name and duration
+        while (file >> tempName >> tempDuration)
         {
-            getline(file, line); // Skip the header line "NAME_LIST_START"
-
-            while (getline(file, line))
-            {
-                if (line.empty())
-                    continue;
-
-                size_t delimiterPos = line.find(':');
-                if (delimiterPos != string::npos)
-                {
-                    string name = line.substr(0, delimiterPos);
-                    int duration = stoi(line.substr(delimiterPos + 1));
-                    names.push_back(name);
-                }
-            }
-            file.close();
+            names.push_back(tempName);
+            durations.push_back(tempDuration);
         }
 
-        // --- STEP 2: CLEAR INPUT BUFFER ---
-        // If you came from a menu, we must clear the '\n'
-        cin.clear();
+        file.close();
         cin.ignore(numeric_limits<streamsize>::max(), '\n');
-
-        // --- STEP 3: INPUT LOOP ---
-        string newName;
-        cout << "\n--- Adding Multiple Transactions (type 'done' to stop) ---\n";
 
         while (true)
         {
-            newName = getValidTransactionName(names);
-            if (newName == "done")
+            string name = getValidTransactionName(names);
+            if (name == "done")
                 break;
 
-            int newDuration = getValidTransactionDuration();
+            int duration = getValidTransactionDuration();
 
-            names.push_back(newName);
-            durations.push_back(newDuration);
-
-            cout << ">> '" << newName << "' added to queue.\n";
+            names.push_back(name);
+            durations.push_back(duration);
         }
 
-        // --- STEP 4: SAVE ALL ---
         saveToFile(names, durations);
-        cout << "Success: File updated with " << names.size() << " total transactions.\n";
     }
 
     void DisplayTransactions()
@@ -356,15 +319,19 @@ struct Transactions
         cout << "=========================================\n";
         cout << "Current Transactions Configuration:\n";
         cout << "=========================================\n";
-
         ifstream file("transactions.txt");
-        string line;
+        string header, name;
+        int duration;
 
-        while (getline(file, line))
+        file >> header; // If file doesn't exist, this fails silently
+        cout << left << setw(20) << "Transaction" << "Duration" << endl;
+        cout << "----------------------------------------------\n";
+
+        // This loop only runs if the file exists and has data
+        while (file >> name >> duration)
         {
-            cout << line << endl;
+            cout << left << setw(20) << name << duration << " mins" << endl;
         }
-
         file.close();
     }
 };

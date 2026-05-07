@@ -3,6 +3,8 @@
 #include <string>
 #include <fstream>
 #include <vector>
+#include <limits>
+#include <algorithm>
 using namespace std;
 
 // finalized
@@ -10,7 +12,7 @@ struct MAIN
 {
     void title()
     {
-        const char str[35] = "BANK CUSTOMERS QUEUING SYSTEM";
+        const char str[] = "BANK CUSTOMERS QUEUING SYSTEM";
         int width = 40;
         cout << setw(40);
         cout << char(201); // upper left corner
@@ -18,19 +20,17 @@ struct MAIN
             cout << char(205);
         cout << char(187); // upper right corner
         cout << endl
-             << setw(40) << char(186) << "      " << str << "      " << char(186) << endl;
+             << setw(40) << char(186) << "      " << str << "     " << char(186) << endl;
         cout << setw(40);
         cout << char(200); // bottom left corner
         for (int i = 0; i < width; i++)
             cout << char(205);
-        cout << char(188) << endl
-             << endl
-             << endl; // bottom right corner
+        cout << char(188) << endl<< endl<< endl; // bottom right corner
     }
 
     void displayMainMenu()
     {
-        cout << "=========================================\n";
+        cout << "\n=========================================\n";
         cout << "Welcome to the Bank Simulation System!" << endl;
         cout << "=========================================\n";
         cout << "Please select an option:" << endl;
@@ -161,9 +161,8 @@ struct WorkingHours
 
             ofstream file("workinghours.txt");
 
-            file << "Opening Time : " << opening << endl;
-            file << "Closing Time : " << closing << endl;
-            file << "Total Working Minutes : " << HourstoMinutes(closing) - HourstoMinutes(opening) << endl;
+            file << "Opening Time : "<<endl<<  opening << endl<< "Closing Time : " <<endl<< closing << endl<< "Total Working Minutes : " <<endl
+            << HourstoMinutes(closing) - HourstoMinutes(opening) << endl;
             file.close();
 
         } while (HourstoMinutes(closing) <= HourstoMinutes(opening));
@@ -188,25 +187,17 @@ struct WorkingHours
     }
 };
 
-// finalized
+// needs some work to solve the problem of adding transactions and a new line problem
 struct Transactions
 {
-
-    void saveToFile(const vector<string> &names, const vector<int> &durations)
+    bool isValidName(const string &name)
     {
-        ofstream file("transactions.txt");
-
-        file << "DATA_HEADER" << endl;
-
-        for (int i = 0; i < names.size(); ++i)
-        {
-            file << names[i] << " " << durations[i] << endl;
-        }
-
-        file.close();
+        return !name.empty();
     }
-
-    // Bool to check for duplicates
+    bool isValidDuration(int duration)
+    {
+        return duration > 0;
+    }
     bool alreadyExists(const vector<string> &names, const string &name)
     {
         return find(names.begin(), names.end(), name) != names.end();
@@ -214,27 +205,26 @@ struct Transactions
 
     string getValidTransactionName(const vector<string> &existingNames)
     {
-        string name;
-
+        string name = "0";
         while (true)
         {
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
             cout << "Enter transaction name (or 'done' to finish): ";
+            getline(cin, name);
 
-            // Use getline to allow names with spaces
-            if (!getline(cin, name) || name == "done")
-            {
-                return "done";
-            }
+            if (name == "done")
+                return name;
 
-            if (name.empty())
+            if (!isValidName(name))
             {
-                cout << "ERROR: Name cannot be empty.\n";
+                cout << "ERROR: Transaction name cannot be empty. Please enter a valid name: ";
                 continue;
             }
 
             if (alreadyExists(existingNames, name))
             {
-                cout << "ERROR: '" << name << "' already exists. Enter a unique name: \n";
+                cout << "ERROR: Transaction name already exists. Please enter a unique name: ";
                 continue;
             }
 
@@ -245,36 +235,54 @@ struct Transactions
     int getValidTransactionDuration()
     {
         int duration;
-
-        cout << "Enter average duration in minutes: ";
-        while (!(cin >> duration) || duration <= 0)
+        while (true)
         {
-            cin.clear();                                         // Clear error flag
-            cin.ignore(numeric_limits<streamsize>::max(), '\n'); // Discard bad input
-            cout << "ERROR: Please enter a valid positive integer for duration: ";
+            cout << "Enter average duration in minutes: ";
+            if (!(cin >> duration) || !isValidDuration(duration))
+            {
+                cin.clear();
+                cin.ignore(numeric_limits<streamsize>::max(), '\n');
+                cout << "ERROR\nPLEASE RE-ENTER A VALID DURATION: ";
+            }
+            else
+            {
+                cin.ignore(numeric_limits<streamsize>::max(), '\n'); // Clear the input buffer after reading duration
+                return duration;
+            }
         }
-        cin.ignore(numeric_limits<streamsize>::max(), '\n'); // Clean buffer for next getline
-        return duration;
     }
 
     void defineTransactionTypes()
+
     {
         vector<string> names;
         vector<int> durations;
+
         string name;
+        int duration;
 
-        cin.ignore(numeric_limits<streamsize>::max(), '\n');
-
-        while ((name = getValidTransactionName(names)) != "done")
+        while (true)
         {
-            int duration = getValidTransactionDuration();
+            name = getValidTransactionName(names);
+            if (name == "done")
+                break;
+
+            duration = getValidTransactionDuration();
+
             names.push_back(name);
             durations.push_back(duration);
         }
 
-        saveToFile(names, durations);
         cout << "-------------------------------\n";
-        cout << "Transactions Changed successfully!" << endl;
+        cout << "Transactions Added successfully!" << endl;
+
+        ofstream file("transactions.txt");
+        file << "Transaction \t Duration\n";
+        for (int i = 0; i < names.size(); i++)
+        {
+            file << names[i] << setw(18 - names[i].length()) << durations[i] << "\n";
+        }
+        file.close();
     }
 
     void addTransaction()
@@ -283,35 +291,33 @@ struct Transactions
         vector<int> durations;
 
         ifstream file("transactions.txt");
-        string header, tempName;
+        string tempName;
         int tempDuration;
-
-        file >> header;
 
         while (file >> tempName >> tempDuration)
         {
             names.push_back(tempName);
             durations.push_back(tempDuration);
         }
-
         file.close();
-        cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
-        while (true)
+        string name = getValidTransactionName(names);
+        if (name == "done")
+            return;
+
+        int duration = getValidTransactionDuration();
+
+        names.push_back(name);
+        durations.push_back(duration);
+
+        // Code to save updated transactions back to file
+        ofstream outputFile("transactions.txt");
+        outputFile << "Transaction \t Duration\n";
+        for (int i = 0; i < names.size(); i++)
         {
-            string name = getValidTransactionName(names);
-            if (name == "done")
-                break;
-
-            int duration = getValidTransactionDuration();
-
-            names.push_back(name);
-            durations.push_back(duration);
+            outputFile << names[i] << setw(18 - names[i].length()) << durations[i] << "\n";
         }
-
-        saveToFile(names, durations);
-        cout << "-------------------------------\n";
-        cout << "Transactions Added successfully!" << endl;
+        outputFile.close();
     }
 
     void DisplayTransactions()
@@ -320,16 +326,10 @@ struct Transactions
         cout << "Current Transactions Configuration:\n";
         cout << "=========================================\n";
         ifstream file("transactions.txt");
-        string header, name;
-        int duration;
-
-        file >> header; // If file doesn't exist, this fails silently
-        cout << left << setw(20) << "Transaction" << "Duration" << endl;
-        cout << "----------------------------------------------\n";
-
-        while (file >> name >> duration)
+        string line;
+        while (getline(file, line))
         {
-            cout << left << setw(20) << name << duration << " mins" << endl;
+            cout << line << endl;
         }
         file.close();
     }
@@ -393,7 +393,6 @@ void viewCurrentConfiguration()
     cout << "=========================================\n";
     cout << "Current System Configuration:\n";
     cout << "=========================================\n";
-
     // Code to read and display current configuration from saved files
     tellers.DisplayTellers();
     hours.DisplayWorkingHours();

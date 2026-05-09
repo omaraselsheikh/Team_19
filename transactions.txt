@@ -1,11 +1,2 @@
 DATA_HEADER
-omar 3
-njsfv 3
-ramez 3
-gd3 4
-jidfvh 5
-1 4
-234dd 4
-3dfv 342
-3wdv 4
-deposit 5
+okka 2

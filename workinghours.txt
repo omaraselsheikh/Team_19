@@ -1,3 +1,3 @@
-Opening Time : 09:00
-Closing Time : 09:30
-Total Working Minutes : 30
+Opening Time : 12:00
+Closing Time : 18:00
+Total Working Minutes : 360

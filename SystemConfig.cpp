@@ -5,57 +5,19 @@
 #include <vector>
 using namespace std;
 
-// finalized
-struct MAIN
+void displaySystemConfigMenu()
 {
-    void title()
-    {
-        const char str[35] = "BANK CUSTOMERS QUEUING SYSTEM";
-        int width = 40;
-        cout << setw(40);
-        cout << char(201); // upper left corner
-        for (int i = 0; i < width; i++)
-            cout << char(205);
-        cout << char(187); // upper right corner
-        cout << endl
-             << setw(40) << char(186) << "      " << str << "      " << char(186) << endl;
-        cout << setw(40);
-        cout << char(200); // bottom left corner
-        for (int i = 0; i < width; i++)
-            cout << char(205);
-        cout << char(188) << endl
-             << endl
-             << endl; // bottom right corner
-    }
-
-    void displayMainMenu()
-    {
-        cout << "=========================================\n";
-        cout << "Welcome to the Bank Simulation System!" << endl;
-        cout << "=========================================\n";
-        cout << "Please select an option:" << endl;
-        cout << "1. System Configuration" << endl;
-        cout << "2. Run Simulation" << endl;
-        cout << "3. View Reports" << endl;
-        cout << "4. View Statistics" << endl;
-        cout << "5. Exit" << endl;
-        cout << "========================================" << endl;
-    }
-
-    void displaySystemConfigMenu()
-    {
-        cout << "========================================" << endl;
-        cout << "System Configuration selected." << endl;
-        cout << "========================================" << endl;
-        cout << "1. Set Number of Tellers" << endl;
-        cout << "2. Set Working Hours" << endl;
-        cout << "3. Define Transaction Types" << endl;
-        cout << "4. Set Yearly Customer Target" << endl;
-        cout << "5. View Current Configuration" << endl;
-        cout << "6. Back to Main Menu" << endl;
-        cout << "========================================" << endl;
-    }
-};
+    cout << "========================================" << endl;
+    cout << "System Configuration selected." << endl;
+    cout << "========================================" << endl;
+    cout << "1. Number of Tellers" << endl;
+    cout << "2. Working Hours" << endl;
+    cout << "3. Transaction Types" << endl;
+    cout << "4. Yearly Customer Target" << endl;
+    cout << "5. View Current Configuration" << endl;
+    cout << "6. Back to Main Menu" << endl;
+    cout << "========================================" << endl;
+}
 
 // finalized
 struct NumberOfTellers

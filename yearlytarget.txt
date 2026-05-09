@@ -1,2 +1,2 @@
-Yearly Customer Target: 1222212
-Average Customers per Day: 3395
+Yearly Customer Target: 221244
+Average Customers per Day: 614

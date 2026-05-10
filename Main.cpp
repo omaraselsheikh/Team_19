@@ -1,7 +1,7 @@
 #include <iostream>
 #include <cstdlib>
 #include "SystemConfig.cpp"
-#include "RunSimulation.cpp"
+#include "GeneratingCustomersData.cpp"
 #include "ViewReports.cpp"
 #include "ViewStats.cpp"
 
@@ -203,18 +203,20 @@ int main()
             switch (ch2)
             {
             case '1':
+            {
                 cout << customersperday() << endl;
-
                 break;
+            }
             case '2':
+            {
                 readData m;
                 cout << m.readTellersNumber() << endl;
-
                 break;
+            }
             case '3':
             {
-                readData rd;                              // Create an instance of readData
-                WorkingHours1 wh = rd.readWorkingHours(); // Call the function
+                readData rd;                             // Create an instance of readData
+                workingHours wh = rd.readWorkingHours(); // Call the function
 
                 // Print the values
                 cout << "Opening time: " << wh.opening << endl;
@@ -224,7 +226,6 @@ int main()
                 break;
             }
             case '4':
-
                 break;
             default:
                 cout << "Invalid choice. Returning to main menu." << endl;
